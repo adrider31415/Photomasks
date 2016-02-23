@@ -43,7 +43,7 @@ def trench_pattern(x0, y0, sw, sh, bw, bh, spread_length, n, layer):
 
 def outline(x0, y0, bw, bh, sw, sh, top_layer, bottom_layer, shield = 1.):
 	gap = (bw-sw)/2.
-	tw = 50.
+        tw = 50.
         y0 += shield
 	#poly_cell.add(gdspy.Rectangle((x0, y0), (x0-tw, y0 + bh), top_layer))
 	poly_cell.add(gdspy.Rectangle((x0-tw, y0+bh), (x0+gap, y0+bh+tw), top_layer))
@@ -60,7 +60,7 @@ def outline(x0, y0, bw, bh, sw, sh, top_layer, bottom_layer, shield = 1.):
         #poly_cell.add(gdspy.Rectangle((x0-500, y0+500), (x0+bw+500, y0-500), bottom_layer))
 
 
-def cantilever(x0, y0, bw, bh, sw, sh, trench_width, bottom_layer, shield):
+def cantilever(x0, y0, bw, bh, sw, sh, trench_width, bottom_layer, shield, n):
 	ntrenches = int(sw/(2.*trench_width)) - 1
 	bgap = (bw-sw)/2.
 	lgap = (sw - trench_width*(2*ntrenches - 1))/2.    
@@ -75,6 +75,7 @@ def cantilever(x0, y0, bw, bh, sw, sh, trench_width, bottom_layer, shield):
         poly_cell.add(gdspy.Rectangle((x0+bw/2.-trench_width/2., y0-600.), (x0+bw/2.+trench_width/2., y0+bh+sh-100.), bottom_layer + 1))
         poly_cell.add(gdspy.Rectangle((x0+bw/2.-trench_width*8./2., y0-600.), (x0+bw/2.+trench_width*8./2., y0+bh-100.), bottom_layer + 1))
         poly_cell.add(gdspy.Text(str(shield), 300, (x0+800, y0+400), layer = bottom_layer + 2))
+        poly_cell.add(gdspy.Text(str(n), 300, (x0+2000, y0+400), layer = bottom_layer + 2))
         
         #poly_cell.add(gdspy.Rectangle((x0-500, y0+500), (x0+bw+500, y0-500), bottom_layer))
         
@@ -96,7 +97,7 @@ def shield_thickness(i, increments = np.array([0, 2, 4, 6, 8, 10]), shields = [0
         
         
 
-def cantilever_row(x_spacing, nx, x_start, y, ny, y_spacing, y0):
+def cantilever_row(x_spacing, nx, x_start, y, ny, y_spacing, y0, r):
 	xs = numpy.arange(x_start, nx*x_spacing+x_start, x_spacing)
         shields = numpy.array([1, 2, 4, 6, 8, 10])
         tshields = shields
@@ -108,7 +109,7 @@ def cantilever_row(x_spacing, nx, x_start, y, ny, y_spacing, y0):
                 
                 if not tshields.any():
                         tshields = shields
-		cantilever(x-575., y, 3000, 5000, 500, 500, 25, 1, s)
+		cantilever(x-575., y, 3000, 5000, 500, 500, 25, 1, s, i + r*nx)
                 
                 #cross(x, y-500, 100, 500, 3)
                 #cross(x, y+5000, 100, 500, 3) 
@@ -126,8 +127,8 @@ def cantilever_grid(x0, y0, nx, ny, x_spacing, y_spacing):
 	ys = numpy.arange(y0, ny*y_spacing + y0, y_spacing)
         xs = numpy.arange(x0, nx*x_spacing + x0, x_spacing)
         wire_width = 200.
-	for y in ys:
-		 cantilever_row(x_spacing, nx, x0, y, ny, y_spacing, y0)
+	for i in range(len(ys)):
+		 cantilever_row(x_spacing, nx, x0, ys[i], ny, y_spacing, y0, i)
 
         for x in xs:
                 poly_cell.add(gdspy.Rectangle((x-1050, y0-600), (x-850, (ny)*y_spacing + y0 - 400), 3))
@@ -218,20 +219,22 @@ def fine_alignment_mark(x0, y0, gap, layer1, layer2, n2 = 6):
                         
                         
                         if i>n2 :
-                                poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap) - lag), (x0 + l, y0 + s_offset + i*(t + gap) + t - lag), layer2))
-                                poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap) - lag), (x0 + l, y0 + s_offset + i*(t + gap) + t - lag), layer2).rotate(2.*numpy.pi-numpy.pi/2., center = [x0, y0]))
+                                poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap) - lag -t/4.), (x0 - l, y0 + s_offset + i*(t + gap) + t - lag + t/4.), layer2))
+                                poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap) - lag-t/4.), (x0 - l, y0 + s_offset + i*(t + gap) + t - lag +t/4.), layer2).rotate(2.*numpy.pi-numpy.pi/2., center = [x0, y0]))
                         if i<n2:
-                                poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap) + lag), (x0 + l, y0 + s_offset + i*(t + gap) + lag +t), layer2))
-                                poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap) + lag), (x0 + l, y0 + s_offset + i*(t + gap) + lag +t), layer2).rotate(2.*numpy.pi-numpy.pi/2., center = [x0, y0]))
+                                poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap) + lag - t/4.), (x0 - l, y0 + s_offset + i*(t + gap) + lag +t + t/4.), layer2))
+                                poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap) + lag - t/4.), (x0 - l, y0 + s_offset + i*(t + gap) + lag +t + t/4.), layer2).rotate(2.*numpy.pi-numpy.pi/2., center = [x0, y0]))
                         
                 if i == n2:
                         poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap)), (x0 - 2.*l, y0 + s_offset + i*(t + gap) + t), layer1))
-                        poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap)), (x0 + 2.*l, y0 + s_offset + i*(t + gap) + t), layer2))
-                        poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap)), (x0 - 2.*l, y0 + s_offset + i*(t + gap) + t), layer1).rotate(2.*numpy.pi-numpy.pi/2., center = [x0, y0]))
+                        poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap)), (x0 - 2.*l, y0 + s_offset + i*(t + gap) + t), layer2))
+                        poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap)), (x0 + 2.*l, y0 + s_offset + i*(t + gap) + t), layer1).rotate(2.*numpy.pi-numpy.pi/2., center = [x0, y0]))
                         poly_cell.add(gdspy.Rectangle((x0 , y0 + s_offset + i*(t + gap)), (x0 + 2.*l, y0 + s_offset + i*(t + gap) + t), layer2).rotate(2.*numpy.pi-numpy.pi/2., center = [x0, y0]))
                 
 
-fine_alignment_mark(0, 0, 25, 20, 21)
+fine_alignment_mark(-36500, -700, 40, 3, 1)
+fine_alignment_mark(35500, -700, 40, 3, 1)                        
+
 
 centy = -(6.*7500.+5000.)/2.
 centx = -(10.*3750.+1850.)/2.
